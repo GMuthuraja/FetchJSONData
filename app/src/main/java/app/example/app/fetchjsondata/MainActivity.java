@@ -24,6 +24,7 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
 
     ListView list;
+    fetcherService fetch;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,7 +32,11 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         list  = (ListView) findViewById(R.id.listView);
-        new fetcherService().execute(new String[]{"https://reqres.in/api/users?page=1"});
+
+        fetch = new fetcherService();
+        fetch.execute(new String[]{"https://reqres.in/api/users?page=1"});
+
+        //fetch.execute(new String[]{""});
     }
 
 
@@ -47,28 +52,36 @@ public class MainActivity extends AppCompatActivity {
                 URL url = new URL(params[0]);
                 connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestMethod("GET");
+                //connection.setRequestProperty("Authorization", "03b7b0b2-89b0-40c0-b77f-42919a7652b5");
                 connection.connect();
 
-                InputStream input_stream = connection.getInputStream();
-                if(input_stream == null){
-                    return null;
-                }
+//                  int resCode = connection.getResponseCode();
+//                  if(resCode > 400){
+//                    Log.e("Error", connection.getResponseMessage());
+//                  }else {
+//                    Log.e("Success", "");
+//                  }
+
+                    InputStream input_stream = connection.getInputStream();
+                    if(input_stream == null){
+                        return null;
+                    }
 
 
-                buffer_reader = new BufferedReader(new InputStreamReader(input_stream));
-                StringBuffer buffer =new StringBuffer();
-                String lines;
+                    buffer_reader = new BufferedReader(new InputStreamReader(input_stream));
+                    StringBuffer buffer =new StringBuffer();
+                    String lines;
 
 
-                while((lines = buffer_reader.readLine()) != null){
-                    buffer.append(lines+"\n");
-                }
+                    while((lines = buffer_reader.readLine()) != null){
+                        buffer.append(lines+"\n");
+                    }
 
-                if(buffer.length() == 0){
-                    return null;
-                }
+                    if(buffer.length() == 0){
+                        return null;
+                    }
 
-                results = buffer.toString();
+                    results = buffer.toString();
             }catch (Exception e){
                 Log.e("Error", e.toString());
             }
@@ -78,26 +91,26 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(String values) {
 
-            //Displaying data in single row
-            try {
-                JSONObject jsonObject = new JSONObject(values);
-                JSONArray jsonArray = jsonObject.getJSONArray("data");
+            if(!values.isEmpty()) {
+                //Displaying data in single row
+                try {
+                    JSONObject jsonObject = new JSONObject(values);
+                    JSONArray jsonArray = jsonObject.getJSONArray("data");
 
-                ArrayList<String> arrayList = new ArrayList<String>();
+                    ArrayList<String> arrayList = new ArrayList<String>();
 
 
-                for(int i=0; i<jsonArray.length();i++){
-                    arrayList.add(jsonArray.getJSONObject(i).getString("first_name"));
+                    for (int i = 0; i < jsonArray.length(); i++) {
+                        arrayList.add(jsonArray.getJSONObject(i).getString("first_name"));
+                    }
+
+                    ArrayAdapter adapter = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_list_item_1, arrayList.toArray(new String[arrayList.size()]));
+                    list.setAdapter(adapter);
+
+                } catch (Exception e) {
+                    Log.e("Error", e.toString());
                 }
-
-                ArrayAdapter adapter = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_list_item_1, arrayList.toArray(new String[arrayList.size()]));
-                list.setAdapter(adapter);
-
-            }catch (Exception e){
-                Log.e("Error", e.toString());
             }
-
-
 
 
            /* Displaying data in two rows
